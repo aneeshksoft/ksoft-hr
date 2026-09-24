@@ -1,0 +1,1 @@
+<script src="<?= base_url() ?>assets/common/js/index.js"></script>

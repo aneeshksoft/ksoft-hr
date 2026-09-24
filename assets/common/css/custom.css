@@ -1,0 +1,21 @@
+label.error {
+    font-weight:normal;
+    color:var(--red);
+}
+.form-control.error {
+    border-color:var(--red);
+}
+.form-control.valid {
+    border-color:var(--green);
+}
+.form-control {   
+    font-size: 16px;
+    height: 45px;
+}
+.btn {
+    font-size: 18px;
+}
+.btn:focus {
+    box-shadow: none !important;
+}
+

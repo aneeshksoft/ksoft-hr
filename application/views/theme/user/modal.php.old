@@ -1,0 +1,136 @@
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
+
+<style>
+	#draggableAjaxModal .modal-dialog {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		margin: 0;
+		transition: none;
+		width: 100%;
+	}
+
+	.ui-draggable .ui-draggable-handle {
+		cursor: move;
+		transform: none !important;
+	}
+
+	/* Hide unnecessary accessible elements */
+	.ui-helper-hidden-accessible {
+		display: none !important;
+	}
+</style>
+
+<script type="text/javascript">
+	// Centralized loading spinner HTML
+	const defaultLoadingSpinnerHtml = `
+        <div class="text-center">
+            <div class="spinner-grow spinner-grow-sm text-muted"></div>
+            <div class="spinner-grow spinner-grow-sm text-primary"></div>
+            <div class="spinner-grow spinner-grow-sm text-success"></div>
+        </div>`;
+
+	/**
+	 * Displays an AJAX-loaded modal with draggable functionality.
+	 *
+	 * @param {string} url - The URL to load content from.
+	 * @param {string} [modalTitle='&nbsp;'] - The modal title.
+	 * @param {string} [modalSizeClass=''] - Additional modal size classes.
+	 * @param {boolean} [showCloseButton=true] - Whether to show the close button.
+	 * @param {string} [backdropBehavior='static'] - The backdrop behavior.
+	 * @param {string} [httpMethod='POST'] - The HTTP method to use.
+	 * @param {Object} [requestData={}] - Data to send with the request.
+	 * @param {string} [loadingIndicatorHtml=defaultLoadingSpinnerHtml] - HTML for the loading indicator.
+	 * @param {Function|null} [successCallback=null] - Callback on success.
+	 * @param {Function|null} [errorCallback=null] - Callback on error.
+	 */
+	function showDraggableAjaxModal(url, modalTitle = '&nbsp;', modalSizeClass = '', requestData = {}, showCloseButton = true, backdropBehavior = 'static', httpMethod = 'POST', loadingIndicatorHtml = defaultLoadingSpinnerHtml, successCallback = null, errorCallback = null) {
+		const $modal = $('#draggableAjaxModal');
+		const $modalDialog = $modal.find('.modal-dialog');
+		const $modalTitle = $modal.find('.modal-title');
+		const $modalBody = $modal.find('.modal-body');
+		const $closeButton = $modal.find('.close');
+
+		// Reset modal size and content
+		$modalDialog.attr('class', 'modal-dialog modal-dialog-scrollable').addClass(modalSizeClass || '');
+		$modalTitle.html(modalTitle);
+		$modalBody.html(loadingIndicatorHtml);
+		$closeButton.toggle(showCloseButton);
+
+		// Show modal with desired behavior
+		$modal.modal({
+			backdrop: backdropBehavior,
+			keyboard: backdropBehavior !== 'static'
+		});
+
+		// Enable draggable functionality
+		$modalDialog.draggable({
+			handle: ".modal-header",
+			cancel: ".close, .btn",
+			containment: "window",
+			start: function(event, ui) {
+				$(this).css({
+					top: ui.position.top,
+					left: ui.position.left,
+					transform: "none"
+				});
+			}
+		});
+
+		// AJAX request to load modal content
+		$.ajax({
+			url: url,
+			method: httpMethod,
+			data: requestData,
+			contentType: false, // Important for FormData
+			processData: false, // Important for FormData
+			dataType: 'json',
+			success: function(response) {
+				if (response.status) {
+					$modalBody.html(response.data);
+					if (typeof successCallback === 'function') {
+						successCallback(response);
+					}
+				} else {
+					$modalBody.html(`
+                        <div class="alert alert-danger text-center" role="alert">
+                            ${response.msg}
+                        </div>
+                    `);
+				}
+			},
+			error: function(xhr, status, error) {
+				console.error("Request failed:", error);
+				$modalBody.html(`<p class="text-danger">Something went wrong!. Please try again.</p>`);
+				if (typeof errorCallback === 'function') {
+					errorCallback(xhr, status, error);
+				}
+			}
+		});
+	}
+
+	// Close modal function
+	function closeDraggableModal() {
+		$('#draggableAjaxModal').modal('hide');
+	}
+</script>
+
+<!-- Draggable AJAX Modal Structure -->
+<div class="modal fade" id="draggableAjaxModal" role="dialog" aria-labelledby="draggableModalLabel" aria-hidden="true" data-focus="false">
+	<div class="modal-dialog modal-dialog-scrollable" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h6 class="modal-title" id="draggableModalLabel">&nbsp;</h6>
+				<!-- Close button with close modal functionality -->
+				<button type="button" class="close" aria-label="Close" onclick="closeDraggableModal();">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<!-- AJAX content will be loaded here -->
+			</div>
+		</div>
+	</div>
+</div>
